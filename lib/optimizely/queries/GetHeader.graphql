@@ -1,0 +1,16 @@
+query getHeader($locale: [Locales]) {
+  Header(locale: $locale) {
+    item {
+      logo
+      ctaText
+      ctaHref
+      navItems {
+        __typename
+        ... on NavItem {
+          label
+          href
+        }
+      }
+    }
+  }
+}

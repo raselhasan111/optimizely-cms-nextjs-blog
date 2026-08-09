@@ -1,0 +1,15 @@
+query GetAllStartPageVersions($locales: [Locales]) {
+  StartPage(locale: $locales) {
+    items {
+      _metadata {
+        version
+      }
+      title
+      shortDescription
+      keywords
+      blocks {
+        ...ItemsInContentArea
+      }
+    }
+  }
+}

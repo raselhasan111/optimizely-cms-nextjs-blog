@@ -1,0 +1,27 @@
+query getFooter($locales: [Locales]) {
+  Footer(locale: $locales) {
+    item {
+      copyrightText
+      socialLinks {
+        __typename
+        ... on SocialLink {
+          platform
+          href
+        }
+      }
+      columns {
+        __typename
+        ... on FooterColumn {
+          title
+          links {
+            __typename
+            ... on NavItem {
+              label
+              href
+            }
+          }
+        }
+      }
+    }
+  }
+}

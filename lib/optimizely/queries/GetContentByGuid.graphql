@@ -1,0 +1,18 @@
+query GetContentByGuid($guid: String) {
+  _Content(where: { _metadata: { key: { eq: $guid } } }) {
+    item {
+      _metadata {
+        displayName
+        version
+        key
+        url {
+          base
+          internal
+          hierarchical
+          default
+          type
+        }
+      }
+    }
+  }
+}
