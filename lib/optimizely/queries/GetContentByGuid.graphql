@@ -3,6 +3,7 @@ query GetContentByGuid($guid: String) {
     item {
       __typename
       _metadata {
+        types
         displayName
         version
         key
