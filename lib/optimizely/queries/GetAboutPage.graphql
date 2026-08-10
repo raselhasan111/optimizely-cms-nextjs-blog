@@ -1,0 +1,33 @@
+query getAboutPage($locales: [Locales], $slug: String) {
+  CMSPage(
+    locale: $locales
+    where: { _metadata: { url: { default: { eq: $slug } } } }
+  ) {
+    total
+    item {
+      title
+      shortDescription
+      blocks {
+        __typename
+        ... on ProfileBlock {
+          imageSrc
+          bio
+          name
+          title
+        }
+        ... on StoryBlock {
+          story
+          highlights
+        }
+        ... on AvailabilityBlock {
+          availability
+          projectTypes
+        }
+        ... on ContactBlock {
+          title
+          description
+        }
+      }
+    }
+  }
+}
