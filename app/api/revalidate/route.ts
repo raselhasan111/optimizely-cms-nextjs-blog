@@ -1,8 +1,21 @@
+import { createHash, timingSafeEqual } from 'crypto'
+import { z } from 'zod'
 import { optimizely } from '@/lib/optimizely/fetch'
+import { extractSlugFromContentUrl } from '@/lib/blog/slug'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
 
 const OPTIMIZELY_REVALIDATE_SECRET = process.env.OPTIMIZELY_REVALIDATE_SECRET
+
+const WebhookBodySchema = z
+  .object({
+    data: z
+      .object({
+        docId: z.string().optional(),
+      })
+      .optional(),
+  })
+  .passthrough()
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +46,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Page Not Found' }, { status: 400 })
     }
 
+    if (content?.__typename === 'BlogPost') {
+      await handleBlogPostRevalidation(content._metadata?.url?.default, locale)
+      return NextResponse.json({ revalidated: true, now: Date.now() })
+    }
+
     const urlWithLocale = normalizeUrl(url, locale)
 
     await handleRevalidation(urlWithLocale)
@@ -44,15 +62,29 @@ export async function POST(request: NextRequest) {
 }
 
 function validateWebhookSecret(request: NextRequest) {
-  const webhookSecret = request.nextUrl.searchParams.get('cg_webhook_secret')
-  if (webhookSecret !== OPTIMIZELY_REVALIDATE_SECRET) {
+  const provided = request.nextUrl.searchParams.get('cg_webhook_secret')
+  if (!provided || !OPTIMIZELY_REVALIDATE_SECRET || !secretsMatch(provided, OPTIMIZELY_REVALIDATE_SECRET)) {
     throw new Error('Invalid credentials')
   }
 }
 
+// Hash both sides to a fixed length before comparing: timingSafeEqual
+// requires equal-length buffers (it throws otherwise, which would leak
+// the expected secret's length through the exception path), and
+// hashing removes any length-based side channel from the raw secrets.
+function secretsMatch(provided: string, expected: string): boolean {
+  const providedHash = createHash('sha256').update(provided).digest()
+  const expectedHash = createHash('sha256').update(expected).digest()
+  return timingSafeEqual(providedHash, expectedHash)
+}
+
 async function extractDocId(request: NextRequest): Promise<string> {
-  const requestJson = await request.json()
-  return requestJson?.data?.docId || ''
+  const json = await request.json().catch(() => null)
+  const parsed = WebhookBodySchema.safeParse(json)
+  if (!parsed.success) {
+    throw new Error('Invalid webhook payload')
+  }
+  return parsed.data.data?.docId || ''
 }
 
 async function fetchContentByGuid(guid: string) {
@@ -92,16 +124,30 @@ async function handleRevalidation(urlWithLocale: string) {
   }
 }
 
+// BlogPost URLs are flat in the CMS ("/{locale}/{slug}/") but the
+// frontend route is "/blog/{slug}" (see docs/blog-body-structure.md),
+// so this needs its own path construction instead of normalizeUrl.
+async function handleBlogPostRevalidation(
+  defaultUrl: string | null | undefined,
+  locale: string
+) {
+  const slug = extractSlugFromContentUrl(defaultUrl)
+  if (slug) {
+    const path = `/${locale}/blog/${slug}`
+    console.log(`Revalidating path: ${path}`)
+    await revalidatePath(path)
+  }
+  console.log(`Revalidating tag: optimizely-blog`)
+  await revalidateTag('optimizely-blog')
+}
+
 function handleError(error: unknown) {
   console.error('Error processing webhook:', error)
-  if (error instanceof Error) {
-    if (error.message === 'Invalid credentials') {
-      return NextResponse.json(
-        { message: 'Invalid credentials' },
-        { status: 401 }
-      )
-    }
-    return NextResponse.json({ message: error.message }, { status: 500 })
+  if (error instanceof Error && error.message === 'Invalid credentials') {
+    return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 })
+  }
+  if (error instanceof Error && error.message === 'Invalid webhook payload') {
+    return NextResponse.json({ message: 'Bad Request' }, { status: 400 })
   }
   return NextResponse.json(
     { message: 'Internal Server Error' },

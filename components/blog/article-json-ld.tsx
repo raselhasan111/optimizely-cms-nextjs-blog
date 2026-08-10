@@ -1,6 +1,11 @@
 import { parsePublishedDate } from '@/lib/blog/dates'
 import { getSiteUrl } from '@/lib/blog/site'
 
+// No nonce needed here: CSP's script-src only governs elements the
+// browser would execute as script. type="application/ld+json" is inert
+// structured data, not executable script, so it's exempt in all major
+// browsers — adding a nonce would force this (otherwise staticly
+// generated) route into per-request dynamic rendering for no benefit.
 export function ArticleJsonLd({
   title,
   author,
