@@ -22,7 +22,7 @@ export async function Footer({ locale }: { locale: string }) {
     return null
   }
 
-  const { socialLinks, copyrightText } = footer
+  const { socialLinks } = footer
 
   return (
     <footer className="border-t">
@@ -54,9 +54,6 @@ export async function Footer({ locale }: { locale: string }) {
               </Link>
             )
           })}
-        </div>
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          {copyrightText}
         </div>
       </div>
     </footer>

@@ -1,13 +1,13 @@
 query getPreviewBlogPostByURL(
   $locales: [Locales]
-  $slug: String
+  $urlSuffix: String
   $version: String
 ) {
   BlogPost(
     locale: $locales
     where: {
       _metadata: { version: { eq: $version } }
-      _and: { _metadata: { url: { default: { eq: $slug } } } }
+      _and: { _metadata: { url: { default: { endsWith: $urlSuffix } } } }
     }
   ) {
     total

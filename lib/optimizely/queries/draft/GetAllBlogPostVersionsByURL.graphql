@@ -1,7 +1,7 @@
-query GetAllBlogPostVersionsByURL($locales: [Locales], $slug: String) {
+query GetAllBlogPostVersionsByURL($locales: [Locales], $urlSuffix: String) {
   BlogPost(
     locale: $locales
-    where: { _metadata: { url: { default: { eq: $slug } } } }
+    where: { _metadata: { url: { default: { endsWith: $urlSuffix } } } }
   ) {
     items {
       _metadata {

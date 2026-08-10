@@ -4,7 +4,7 @@ import { PostMeta } from '@/components/blog/post-meta'
 import { PostBody } from '@/components/blog/post-body'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
-import { buildBlogPostGraphUrl } from '@/lib/blog/slug'
+import { buildBlogPostUrlSuffix } from '@/lib/blog/slug'
 import { checkDraftMode } from '@/lib/utils/draft-mode'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
@@ -50,7 +50,7 @@ export default async function CmsPage(props: {
   }
 
   const postResponse = await optimizely.getPreviewBlogPostByURL(
-    { locales, slug: buildBlogPostGraphUrl(locale, slug), version },
+    { locales, urlSuffix: buildBlogPostUrlSuffix(slug), version },
     { preview: true }
   )
   const post = postResponse.data?.BlogPost?.item

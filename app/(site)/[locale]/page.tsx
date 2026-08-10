@@ -11,7 +11,7 @@ export async function generateMetadata(props: {
 
   return {
     title: 'Rasel Hasan',
-    description: 'Writing on frontend engineering, security, and AI-assisted development.',
+    description: 'Writing on frontend engineering, security, and agentic AI.',
     alternates: generateAlternates(locale, '/'),
   }
 }
@@ -28,8 +28,7 @@ export default async function HomePage(props: {
       <header className="mb-12">
         <h1 className="text-3xl font-bold">Rasel Hasan</h1>
         <p className="mt-2 text-muted-foreground">
-          Writing on frontend engineering, security, and AI-assisted
-          development.
+          Writing on frontend engineering, security, and agentic AI.
         </p>
       </header>
 

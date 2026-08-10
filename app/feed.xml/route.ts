@@ -29,14 +29,17 @@ export async function GET() {
   <channel>
     <title>Rasel Hasan</title>
     <link>${escapeXml(siteUrl)}/en</link>
-    <description>Writing on frontend engineering, security, and AI-assisted development.</description>
+    <description>Writing on frontend engineering, security, and agentic AI.</description>
     <language>en</language>${items}
   </channel>
 </rss>`
 
   return new Response(xml, {
     headers: {
-      'Content-Type': 'application/rss+xml',
+      // Without an explicit charset, some clients guess non-UTF-8 and
+      // mangle multi-byte characters (curly quotes, em dashes) from
+      // CMS content into mojibake.
+      'Content-Type': 'application/rss+xml; charset=utf-8',
     },
   })
 }
