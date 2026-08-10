@@ -4,6 +4,8 @@ A comprehensive, module-by-module guide to this Optimizely SaaS CMS frontend bui
 
 > Based on the [Opti Masterclass](https://opti-masterclass.vercel.app) starter template ([szymonuryga/Optimizely-SaaS-CMS-Next.js-15](https://github.com/szymonuryga/Optimizely-SaaS-CMS-Next.js-15)). This template requires an Optimizely SaaS CMS instance to retrieve content.
 
+> **This instance has been converted into Rasel Hasan's personal blog.** The portfolio blocks described in Module 6 below have been deleted, the homepage is now a `BlogPost` listing rather than a CMS `StartPage`, and locales are reduced to `en`. See [docs/blog-architecture.md](docs/blog-architecture.md) for the blog-specific architecture and [docs/blog-body-structure.md](docs/blog-body-structure.md) for the rich-text schema. The rest of this guide still describes the underlying CMSPage/Visual Builder/draft-mode machinery accurately — that infrastructure was kept, not removed.
+
 ---
 
 ## Table of Contents
@@ -15,10 +17,10 @@ A comprehensive, module-by-module guide to this Optimizely SaaS CMS frontend bui
 5. [Modules In Depth](#5-modules-in-depth)
    - [Module 1 — Configuration & Environment](#module-1--configuration--environment)
    - [Module 2 — Data Layer (`lib/optimizely`)](#module-2--data-layer-liboptimizely)
-   - [Module 3 — Localization & Middleware](#module-3--localization--middleware)
+   - [Module 3 — Localization, Middleware & Security Headers](#module-3--localization-middleware--security-headers)
    - [Module 4 — Routing & Pages (`app/(site)`)](#module-4--routing--pages-appsite)
    - [Module 5 — Rendering Engine: Block Factory & Content Area Mapper](#module-5--rendering-engine-block-factory--content-area-mapper)
-   - [Module 6 — Blocks Library](#module-6--blocks-library)
+   - [Module 6 — Blocks Library (removed)](#module-6--blocks-library-removed)
    - [Module 7 — Layout Components (Header / Footer)](#module-7--layout-components-header--footer)
    - [Module 8 — Visual Builder (Experiences)](#module-8--visual-builder-experiences)
    - [Module 9 — Draft Mode & Live Preview (`app/(draft)`)](#module-9--draft-mode--live-preview-appdraft)
@@ -47,7 +49,7 @@ A **headless CMS frontend**: all content (pages, blocks, navigation, experiences
 | Type safety        | GraphQL Codegen → generated TypeScript types + typed SDK           |
 | Rendering strategy | Static Site Generation (SSG) + on-demand revalidation via webhooks |
 | Editor experience  | Next.js Draft Mode + Optimizely preview iframe + Visual Builder    |
-| Localization       | Path-based locales (`en`, `pl`, `sv`) resolved in middleware       |
+| Localization       | Path-based locale (`en` only) resolved in middleware               |
 | Styling / UI       | Tailwind CSS + shadcn/ui (Radix primitives)                        |
 | Images             | `next/image` with a custom Cloudinary-aware loader                 |
 
@@ -287,35 +289,36 @@ if (!service) return null
 
 **Language utils** ([utils/language.ts](lib/optimizely/utils/language.ts)) — `LOCALES = ['en', 'pl', 'sv']`, `DEFAULT_LOCALE = 'en'`, `getValidLocale()` coerces arbitrary strings to a supported `Locales` enum value, and `mapPathWithoutLocale()` strips a leading locale segment from CMS URLs.
 
-### Module 3 — Localization & Middleware
+### Module 3 — Localization, Middleware & Security Headers
 
-**Files:** [middleware.ts](middleware.ts), [components/layout/language-switcher.tsx](components/layout/language-switcher.tsx)
+**Files:** [middleware.ts](middleware.ts)
+
+`LOCALES` is now just `['en']` (the blog is English-only), but the locale-rewrite plumbing was kept rather than deleted, since it's cheap to keep working and other locales can be re-added by extending the array again — no route code depends on there being more than one. The language switcher UI was removed since there is nothing to switch to.
 
 Every request (except `/api/*`, Next internals, and files with extensions — see the `matcher` and `shouldExclude`) passes through the middleware, which guarantees that route handlers always see a `[locale]` param:
 
-1. **URL already contains a supported locale** (`/pl/o-mnie`) → **rewrite** to itself (normalized), set the `__LOCALE_NAME` cookie and append an `X-Locale` response header.
-2. **No locale in URL** (`/about-me`) → resolve one:
+1. **URL already contains a supported locale** (`/en/about`) → **rewrite** to itself (normalized), set the `__LOCALE_NAME` cookie and append an `X-Locale` response header.
+2. **No locale in URL** (`/about`) → resolve one:
    - cookie `__LOCALE_NAME` if valid, else
-   - `Accept-Language` negotiation via `negotiator` (exact match first, then language prefix — `pl-PL` matches `pl`), else
+   - `Accept-Language` negotiation via `negotiator` (exact match first, then language prefix), else
    - `DEFAULT_LOCALE`.
-3. **Default locale → rewrite** (URL stays `/about-me`, internally serves `/en/about-me`). **Non-default → redirect** (browser URL becomes `/pl/about-me`). This gives clean URLs for the primary language and explicit prefixes for others.
-
-The [LanguageSwitcher](components/layout/language-switcher.tsx) (client component) swaps the locale segment in the current path and `router.push`es it; the middleware then persists the choice in the cookie.
+3. **Default locale → rewrite** (URL stays `/about`, internally serves `/en/about`). **Non-default → redirect.**
 
 **To render localized content**, every Graph query takes a `locales` variable — locale is a _query filter_ in Graph, not a different endpoint.
 
+**Security headers** are also set here rather than in `next.config.ts`, because the Content-Security-Policy needs to differ between the `(draft)` route group (relaxed — the CMS's `communicationinjector.js` script and Visual Builder need to iframe those routes) and everywhere else (locked down). `next.config.ts`'s static `headers()` can't express that split without risking two `Content-Security-Policy` response headers landing on the same request — browsers intersect multiple CSP headers into the most restrictive one, which would silently defeat the relaxed override. The CSP currently ships as `Content-Security-Policy-Report-Only`, not enforcing: a strict `script-src 'self'` blocks Next's own App Router RSC hydration scripts (confirmed against both dev and production builds — the page rendered blank), and a nonce + `'strict-dynamic'` per Next's documented CSP pattern didn't get picked up by Next's renderer in this setup. `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`, and `X-Frame-Options` (skipped on draft routes) are fully enforced — they carry no such risk.
+
 ### Module 4 — Routing & Pages (`app/(site)`)
 
-**Files:** [layout.tsx](<app/(site)/[locale]/layout.tsx>), [page.tsx](<app/(site)/[locale]/page.tsx>), [[slug]/page.tsx](<app/(site)/[locale]/[slug]/page.tsx>), [not-found.tsx](<app/(site)/[locale]/not-found.tsx>)
+**Files:** [layout.tsx](<app/(site)/[locale]/layout.tsx>), [page.tsx](<app/(site)/[locale]/page.tsx>), [blog/[slug]/page.tsx](<app/(site)/[locale]/blog/[slug]/page.tsx>), [[slug]/page.tsx](<app/(site)/[locale]/[slug]/page.tsx>), [not-found.tsx](<app/(site)/[locale]/not-found.tsx>)
 
 **Root layout** — loads Geist fonts, renders `<Header/>` and `<Footer/>` (each fetching its own CMS content), and pre-generates one static shell per locale via `generateStaticParams()`.
 
-**Home page (`/[locale]`)** — maps to the CMS **StartPage** type:
+**Home page (`/[locale]`)** — the blog listing, not a CMS page type (there is no listing content type). `getAllPublishedPosts()` (`lib/blog/posts.ts`) fetches all `BlogPost` items, sorts them by parsed `publishedDate` in code (Graph has no `orderBy` for that field — see [docs/blog-body-structure.md](docs/blog-body-structure.md)), and renders one `<PostCard/>` per post. Empty when nothing is published yet — that's expected, not a bug.
 
-1. If draft mode is on → delegate to `DraftModeHomePage` inside `<Suspense>` (Module 9).
-2. Otherwise `optimizely.GetStartPage({ locales })` → take `StartPage.item.blocks` → filter nulls → hand to `<ContentAreaMapper/>`.
+**Article page (`/[locale]/blog/[slug]`)** — see [docs/blog-architecture.md](docs/blog-architecture.md) for the full data flow: URL construction, rich-text rendering, and the draft-mode branch.
 
-**Catch-all page (`/[locale]/[slug]`)** — the workhorse. One route serves **two page paradigms**:
+**Catch-all page (`/[locale]/[slug]`)** — unchanged, still serves CMSPage/SEOExperience content (e.g. `/about`). One route serves **two page paradigms**:
 
 ```
 getPageByURL(slug)               ── found? ──▶ render CMSPage.blocks
@@ -358,18 +361,13 @@ export default blocksMapperFactory(blocks)
 
 [BlockBase](lib/optimizely/types/block.ts) documents the extra props every block implicitly receives (`isFirst`, `preview`, `displaySettings`).
 
-### Module 6 — Blocks Library
+### Module 6 — Blocks Library (removed)
 
-**Files:** [components/block/\*.tsx](components/block)
+**Files:** none — `components/block/` is gone.
 
-Nine block components, one per CMS block type: `HeroBlock`, `StoryBlock`, `ServicesBlock`, `PortfolioGridBlock`, `TestimonialsBlock`, `LogosBlock`, `ProfileBlock`, `AvailabilityBlock`, `ContactBlock`.
+The portfolio template shipped nine block components (`HeroBlock`, `StoryBlock`, `ServicesBlock`, `PortfolioGridBlock`, `TestimonialsBlock`, `LogosBlock`, `ProfileBlock`, `AvailabilityBlock`, `ContactBlock`), all deleted for the blog conversion along with their fragments in `lib/optimizely/queries/fragments/Block.graphql` and their registry entries in `components/content-area/block.tsx`. The **mapper/factory infrastructure from Module 5 was kept** — `blocks` in `block.tsx` is now `{}`, and `blocksMapperFactory` returns `null` for any `__typename` it doesn't recognize, so CMSPage and Visual Builder content areas still work, they just render nothing for these removed types. The CMS still has the underlying content types and content published; only the frontend code was removed (safe — the CMS side is a separate cleanup task, not required for this to work).
 
-Shared conventions (see [hero-block.tsx](components/block/hero-block.tsx) and [services-block.tsx](components/block/services-block.tsx) as canonical examples):
-
-- **Props come from generated types**: `import { HeroBlock as HeroBlockProps } from '@/lib/optimizely/types/generated'` — change the CMS model, re-run codegen, and TypeScript tells you what broke.
-- **Nested content areas** (e.g. `services` inside `ServicesBlock`) are unions — narrow each item with `castContent<ServiceItem>(item, 'ServiceItem')`.
-- **`data-epi-edit="propName"`** attributes mark elements as editable regions: in the CMS preview iframe, clicking such an element jumps the editor to that property. Harmless no-ops on the public site.
-- Null-tolerant rendering everywhere (`??` fallbacks, conditional sections) because Graph fields are nullable.
+If you're re-adding a block type, the conventions that applied before still apply: props from generated types, `castContent` to narrow nested unions, `data-epi-edit="propName"` for CMS-editable regions, null-tolerant rendering.
 
 ### Module 7 — Layout Components (Header / Footer)
 
@@ -458,27 +456,31 @@ On publish, Graph POSTs `{ data: { docId: "<guid>_<locale>_Published" } }`. The 
 1. **Validates the secret** (401 on mismatch) and **ignores non-`Published` docs**.
 2. Parses `docId` → GUID + locale (GUID dashes removed to match Graph's key format).
 3. `GetContentByGuid` → the item's `_metadata.url`.
-4. Resolves the site-relative URL: `url.type === 'SIMPLE'` → `url.default`; hierarchical → `url.hierarchical` minus the start-page prefix. Prepends the locale.
-5. Routes the invalidation:
+4. If the item's `__typename` is `BlogPost`, skips the URL-type logic below entirely: `BlogPost.url.default` is flat (`/{locale}/{slug}/`), not `/{locale}/blog/{slug}/` (see [docs/blog-body-structure.md](docs/blog-body-structure.md)), so it revalidates `/{locale}/blog/{slug}` directly plus the `optimizely-blog` tag (which also covers the homepage listing, `sitemap.xml`, and `feed.xml` — they all read through `getAllPublishedPosts()`, tagged the same way).
+5. Otherwise resolves the site-relative URL: `url.type === 'SIMPLE'` → `url.default`; hierarchical → `url.hierarchical` minus the start-page prefix. Prepends the locale, then routes the invalidation:
    - URL contains `footer` → `revalidateTag('optimizely-footer')`
    - URL contains `header` → `revalidateTag('optimizely-header')`
-   - otherwise → `revalidatePath('/en/about-me')` — regenerates that one page (and its data) on next request.
+   - otherwise → `revalidatePath(...)` — regenerates that one page (and its data) on next request.
+
+The webhook secret comparison uses `crypto.timingSafeEqual` over sha256 hashes of both sides (not the raw strings — `timingSafeEqual` requires equal-length buffers and throws otherwise, which would leak the expected secret's length through the exception path), the request body shape is validated with `zod`, and error responses are generic (no internal details echoed back).
 
 **Trade-off to understand:** `revalidatePath` on a page URL refreshes that page. Publishing a _shared block_ used by many pages doesn't map to one URL — the header/footer tags handle the two known shared items, and anything else would need a broader sweep (e.g. `revalidateTag('optimizely-content')` nukes every Graph response). Keep this in mind when adding shared content types (see Recipes).
 
 ### Module 11 — SEO & Metadata
 
-**Files:** [lib/utils/metadata.ts](lib/utils/metadata.ts), `generateMetadata` in [page.tsx](<app/(site)/[locale]/page.tsx>) and [[slug]/page.tsx](<app/(site)/[locale]/[slug]/page.tsx>)
+**Files:** [lib/utils/metadata.ts](lib/utils/metadata.ts), `generateMetadata` in [page.tsx](<app/(site)/[locale]/page.tsx>), [blog/[slug]/page.tsx](<app/(site)/[locale]/blog/[slug]/page.tsx>) and [[slug]/page.tsx](<app/(site)/[locale]/[slug]/page.tsx>), [components/blog/article-json-ld.tsx](components/blog/article-json-ld.tsx), [app/sitemap.ts](app/sitemap.ts), [app/robots.ts](app/robots.ts), [app/feed.xml/route.ts](app/feed.xml/route.ts)
 
-Each public page implements `generateMetadata()`: it fetches the same content (the Data Cache dedupes — the render fetch and metadata fetch share one Graph call), and maps CMS fields `title` / `shortDescription` / `keywords` to Next metadata. The `[slug]` variant falls back to `SEOExperience` when no `CMSPage` matches — mirroring the render logic.
+Each public page implements `generateMetadata()`. The blog article page additionally renders `<ArticleJsonLd/>` — a `schema.org/Article` block with `JSON.stringify(...).replace(/</g, '\\u003c')` so a CMS-derived title containing `</script>` can't break out of the tag — and can flip its canonical link to the original Medium URL per-post via `MEDIUM_CANONICAL_SLUGS` in `lib/blog/medium-links.ts` (defaults to self-canonical with a visible "Originally published on Medium" attribution link).
 
-[generateAlternates()](lib/utils/metadata.ts) emits a canonical URL plus one `hreflang` alternate per locale (`/en/about-me`, `/pl/about-me`, `/sv/about-me`) so search engines connect the translations.
+`app/sitemap.ts` and `app/feed.xml/route.ts` both build from `getAllPublishedPosts()` (`lib/blog/posts.ts`); `app/robots.ts` points at the sitemap. All three need **absolute** URLs (unlike the relative canonical paths `generateAlternates()` already used), which is why `NEXT_PUBLIC_SITE_URL` exists (`lib/blog/site.ts`) — set it in your deployment env, it defaults to `http://localhost:3000` for local dev.
+
+[generateAlternates()](lib/utils/metadata.ts) emits a canonical URL plus one `hreflang` alternate per locale (only `en` now) so search engines connect the translations.
 
 ### Module 12 — Image Handling
 
 **Files:** [lib/image/loader.ts](lib/image/loader.ts), `images` config in [next.config.ts](next.config.ts)
 
-`next/image` is configured with a **custom global loader**: Cloudinary URLs get transformation parameters injected (`f_auto,c_limit,w_{width},q_{quality}` — auto format, capped width, auto quality; SVGs skipped; already-transformed URLs passed through). Everything else (e.g. images served from `*.optimizely.com`, allowed via `remotePatterns`) is returned unchanged — meaning **Next's built-in optimizer is bypassed**; you rely on the CDN.
+`next/image` is configured with a **custom global loader**: Cloudinary URLs get transformation parameters injected (`f_auto,c_limit,w_{width},q_{quality}` — auto format, capped width, auto quality; SVGs skipped; already-transformed URLs passed through). Everything else is returned unchanged — meaning **Next's built-in optimizer is bypassed**; you rely on the CDN. Because of that, `images.remotePatterns` currently has no functional effect (it's only enforced by Next's *default* loader), but it's kept accurate anyway: the exact CMS host, `res.cloudinary.com` (the actual host the `Header.logo` field uses, verified against real content — not a `*.optimizely.com` wildcard), and `miro.medium.com` for future Medium-hosted images in post bodies.
 
 ### Module 13 — UI Foundation (shadcn/ui + Tailwind)
 
