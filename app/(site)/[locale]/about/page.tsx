@@ -38,10 +38,13 @@ function linkifyText(text: string): ReactNode {
 
 async function fetchAboutPage(locale: string) {
   const locales = getValidLocale(locale)
-  const { data } = await optimizely.getAboutPage({
-    locales: [locales],
-    slug: ABOUT_URL,
-  })
+  const { data } = await optimizely.getAboutPage(
+    {
+      locales: [locales],
+      slug: ABOUT_URL,
+    },
+    { cacheTag: 'optimizely-about' }
+  )
   const item = data?.CMSPage?.item
   const found = (data?.CMSPage?.total ?? 0) > 0
   if (!found || !item) return null
