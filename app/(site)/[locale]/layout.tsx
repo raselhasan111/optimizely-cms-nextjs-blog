@@ -36,7 +36,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header locale={locale} />
+        <Header />
         <main className="container mx-auto min-h-screen px-4">{children}</main>
         <Footer locale={locale} />
       </body>
