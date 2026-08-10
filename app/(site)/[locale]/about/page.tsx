@@ -38,13 +38,25 @@ function linkifyText(text: string): ReactNode {
 
 async function fetchAboutPage(locale: string) {
   const locales = getValidLocale(locale)
-  const { data } = await optimizely.getAboutPage(
+  const { data, errors } = await optimizely.getAboutPage(
     {
       locales: [locales],
       slug: ABOUT_URL,
     },
     { cacheTag: 'optimizely-about' }
   )
+
+  // A failed request is not the same as "the page doesn't exist":
+  // returning null here would notFound() the route, and during static
+  // generation that 404 gets baked into the prerendered HTML (and then
+  // carried across deploys by the restored build cache). Throw instead
+  // so a transient Graph failure fails the build loudly.
+  if (errors?.length) {
+    throw new Error(
+      `getAboutPage failed: ${errors.map((e) => e.message).join('; ')}`
+    )
+  }
+
   const item = data?.CMSPage?.item
   const found = (data?.CMSPage?.total ?? 0) > 0
   if (!found || !item) return null

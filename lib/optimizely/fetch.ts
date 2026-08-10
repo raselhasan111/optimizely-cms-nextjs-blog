@@ -1,4 +1,4 @@
-import { DocumentNode } from 'graphql'
+import { DocumentNode, GraphQLError } from 'graphql'
 import { print } from 'graphql/language/printer'
 import { getSdk } from './types/generated'
 import { isVercelError } from '../type-guards'
@@ -16,7 +16,7 @@ interface OptimizelyFetch<Variables> extends OptimizelyFetchOptions {
 }
 
 interface GraphqlResponse<Response> {
-  errors: unknown[]
+  errors?: GraphQLError[]
   data: Response
 }
 
@@ -91,8 +91,13 @@ async function requester<R, V>(
     ...options,
   })
 
+  // `errors` must be passed through: several callers destructure it to
+  // distinguish "content doesn't exist" (render 404) from "the request
+  // failed" (don't cache a 404!). Dropping it here made every Graph
+  // failure look like missing content.
   return {
     data: request.data,
+    errors: request.errors,
     _headers: request.headers,
   }
 }
