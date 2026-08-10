@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
+import { resolveImageSrc } from '@/lib/optimizely/resolve-content-url'
 
 const ABOUT_URL = '/about'
 
@@ -61,6 +62,14 @@ async function fetchAboutPage(locale: string) {
     | { title: string | null; description: string | null }
     | undefined
 
+  // ProfileBlock.imageSrc is a plain string field: it holds either a
+  // real URL (pasted external link, e.g. the old Cloudinary photo) or a
+  // "cms://content/<key>" reference (an asset picked from the CMS media
+  // library) — resolve the latter to its actual delivery URL.
+  if (profile) {
+    profile.imageSrc = await resolveImageSrc(profile.imageSrc)
+  }
+
   return { page: item, profile, story, availability, contact }
 }
 
@@ -102,7 +111,7 @@ export default async function AboutPage(props: {
             alt={profile.name ?? ''}
             width={72}
             height={72}
-            className="rounded-full"
+            className="aspect-square rounded-full object-cover"
           />
         )}
         <div>
