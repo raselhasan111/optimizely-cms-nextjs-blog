@@ -7,6 +7,20 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 const OPTIMIZELY_REVALIDATE_SECRET = process.env.OPTIMIZELY_REVALIDATE_SECRET
 
+// Profile/Story/Availability/Contact are content-area blocks embedded
+// in the /about CMSPage, not pages themselves — their own
+// _metadata.url is null (verified directly against the CMS), so a
+// publish event for one of them can't be routed through the generic
+// url-based revalidation below at all. They're only ever used on
+// /about (Phase 1 removed every other block type), so that coupling is
+// safe to hardcode here.
+const ABOUT_PAGE_BLOCK_TYPES = new Set([
+  'ProfileBlock',
+  'StoryBlock',
+  'AvailabilityBlock',
+  'ContactBlock',
+])
+
 const WebhookBodySchema = z
   .object({
     data: z
@@ -30,6 +44,15 @@ export async function POST(request: NextRequest) {
     const formattedGuid = guid.replaceAll('-', '')
 
     const content = await fetchContentByGuid(formattedGuid)
+
+    if (
+      content?.__typename &&
+      ABOUT_PAGE_BLOCK_TYPES.has(content.__typename)
+    ) {
+      await handleAboutPageRevalidation(locale)
+      return NextResponse.json({ revalidated: true, now: Date.now() })
+    }
+
     const urlType = content?._metadata?.url?.type
     // In hierarchical routing, the Start Page in Optimizely does not use "/" as its URL.
     // Instead, it has a custom path like "/start-page". We remove the OPTIMIZELY_START_PAGE_URL
@@ -109,6 +132,14 @@ function normalizeUrl(url: string, locale: string): string {
   return normalizedUrl.startsWith(`/${locale}`)
     ? normalizedUrl
     : `/${locale}${normalizedUrl}`
+}
+
+async function handleAboutPageRevalidation(locale: string) {
+  const path = `/${locale}/about`
+  console.log(`Revalidating path: ${path}`)
+  await revalidatePath(path)
+  console.log(`Revalidating tag: optimizely-about`)
+  await revalidateTag('optimizely-about')
 }
 
 async function handleRevalidation(urlWithLocale: string) {
