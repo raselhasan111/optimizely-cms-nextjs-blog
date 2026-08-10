@@ -6,15 +6,15 @@ import { PostBody } from '@/components/blog/post-body'
 
 export default async function DraftModeBlogPost({
   locales,
-  slug,
+  urlSuffix,
   routeSlug,
 }: {
   locales: Locales
-  slug: string
+  urlSuffix: string
   routeSlug: string
 }) {
   const { data } = await optimizely.GetAllBlogPostVersionsByURL(
-    { locales: [locales], slug },
+    { locales: [locales], urlSuffix },
     { preview: true }
   )
   const items = data?.BlogPost?.items

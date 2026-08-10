@@ -1,5 +1,5 @@
-query getAllBlogPosts($locales: [Locales], $limit: Int, $skip: Int) {
-  BlogPost(locale: $locales, limit: $limit, skip: $skip) {
+query getAllBlogPosts($locales: [Locales], $limit: Int) {
+  BlogPost(locale: $locales, limit: $limit) {
     total
     items {
       title

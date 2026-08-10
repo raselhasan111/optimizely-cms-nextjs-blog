@@ -17,11 +17,19 @@ export async function getAllPublishedPosts(
   const { data } = await optimizely.getAllBlogPosts(
     {
       locales: locales ? [locales] : null,
-      limit: null,
-      skip: null,
+      // A real number, not null: the BlogPost field's `limit` argument is
+      // a non-null Int with a server-side default (20) — passing an
+      // explicit `null` throws a GraphQL argument-type error, which was
+      // silently swallowed as "0 posts" because this call never checked
+      // `errors`. 100 comfortably covers this blog for a long while.
+      limit: 100,
     },
     { cacheTag: 'optimizely-blog' }
   )
+
+  if (!data?.BlogPost) {
+    return []
+  }
 
   const items = (data?.BlogPost?.items ?? []).filter(
     (item): item is NonNullable<typeof item> => item !== null

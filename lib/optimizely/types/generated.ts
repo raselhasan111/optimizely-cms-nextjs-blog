@@ -6697,7 +6697,6 @@ export type AllPagesQuery = { __typename?: 'Query', _Content: { __typename?: '_C
 export type GetAllBlogPostsQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
   limit: InputMaybe<Scalars['Int']['input']>;
-  skip: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
@@ -6705,7 +6704,7 @@ export type GetAllBlogPostsQuery = { __typename?: 'Query', BlogPost: { __typenam
 
 export type GetBlogPostByUrlQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
-  slug: InputMaybe<Scalars['String']['input']>;
+  urlSuffix: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -6757,7 +6756,7 @@ export type GetVisualBuilderBySlugQuery = { __typename?: 'Query', SEOExperience:
 
 export type GetAllBlogPostVersionsByUrlQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
-  slug: InputMaybe<Scalars['String']['input']>;
+  urlSuffix: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -6805,7 +6804,7 @@ export type GetContentByKeyAndVersionQuery = { __typename?: 'Query', _Content: {
 
 export type GetPreviewBlogPostByUrlQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
-  slug: InputMaybe<Scalars['String']['input']>;
+  urlSuffix: InputMaybe<Scalars['String']['input']>;
   version: InputMaybe<Scalars['String']['input']>;
 }>;
 
@@ -6944,8 +6943,8 @@ export const AllPagesDocument = gql`
 }
     `;
 export const GetAllBlogPostsDocument = gql`
-    query getAllBlogPosts($locales: [Locales], $limit: Int, $skip: Int) {
-  BlogPost(locale: $locales, limit: $limit, skip: $skip) {
+    query getAllBlogPosts($locales: [Locales], $limit: Int) {
+  BlogPost(locale: $locales, limit: $limit) {
     total
     items {
       title
@@ -6963,8 +6962,11 @@ export const GetAllBlogPostsDocument = gql`
 }
     `;
 export const GetBlogPostByUrlDocument = gql`
-    query getBlogPostByURL($locales: [Locales], $slug: String) {
-  BlogPost(locale: $locales, where: {_metadata: {url: {default: {eq: $slug}}}}) {
+    query getBlogPostByURL($locales: [Locales], $urlSuffix: String) {
+  BlogPost(
+    locale: $locales
+    where: {_metadata: {url: {default: {endsWith: $urlSuffix}}}}
+  ) {
     total
     item {
       title
@@ -7137,8 +7139,11 @@ export const GetVisualBuilderBySlugDocument = gql`
 }
     ${ItemsInContentAreaFragmentDoc}`;
 export const GetAllBlogPostVersionsByUrlDocument = gql`
-    query GetAllBlogPostVersionsByURL($locales: [Locales], $slug: String) {
-  BlogPost(locale: $locales, where: {_metadata: {url: {default: {eq: $slug}}}}) {
+    query GetAllBlogPostVersionsByURL($locales: [Locales], $urlSuffix: String) {
+  BlogPost(
+    locale: $locales
+    where: {_metadata: {url: {default: {endsWith: $urlSuffix}}}}
+  ) {
     items {
       _metadata {
         version
@@ -7282,10 +7287,10 @@ export const GetContentByKeyAndVersionDocument = gql`
 }
     `;
 export const GetPreviewBlogPostByUrlDocument = gql`
-    query getPreviewBlogPostByURL($locales: [Locales], $slug: String, $version: String) {
+    query getPreviewBlogPostByURL($locales: [Locales], $urlSuffix: String, $version: String) {
   BlogPost(
     locale: $locales
-    where: {_metadata: {version: {eq: $version}}, _and: {_metadata: {url: {default: {eq: $slug}}}}}
+    where: {_metadata: {version: {eq: $version}}, _and: {_metadata: {url: {default: {endsWith: $urlSuffix}}}}}
   ) {
     total
     item {

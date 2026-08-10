@@ -36,7 +36,10 @@ export async function GET() {
 
   return new Response(xml, {
     headers: {
-      'Content-Type': 'application/rss+xml',
+      // Without an explicit charset, some clients guess non-UTF-8 and
+      // mangle multi-byte characters (curly quotes, em dashes) from
+      // CMS content into mojibake.
+      'Content-Type': 'application/rss+xml; charset=utf-8',
     },
   })
 }

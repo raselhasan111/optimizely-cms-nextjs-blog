@@ -5,7 +5,7 @@ import { Metadata } from 'next'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
-import { buildBlogPostGraphUrl } from '@/lib/blog/slug'
+import { buildBlogPostUrlSuffix } from '@/lib/blog/slug'
 import { parsePublishedDate } from '@/lib/blog/dates'
 import { getAllPublishedPosts } from '@/lib/blog/posts'
 import { getMediumUrl, isMediumCanonical } from '@/lib/blog/medium-links'
@@ -30,11 +30,11 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const { locale, slug } = await props.params
   const locales = getValidLocale(locale)
-  const graphUrl = buildBlogPostGraphUrl(locale, slug)
+  const urlSuffix = buildBlogPostUrlSuffix(slug)
 
   const { data } = await optimizely.getBlogPostByURL({
     locales: [locales],
-    slug: graphUrl,
+    urlSuffix,
   })
   const post = data?.BlogPost?.item
   const postFound = (data?.BlogPost?.total ?? 0) > 0
@@ -70,20 +70,24 @@ export default async function BlogPostPage(props: {
 }) {
   const { locale, slug } = await props.params
   const locales = getValidLocale(locale)
-  const graphUrl = buildBlogPostGraphUrl(locale, slug)
+  const urlSuffix = buildBlogPostUrlSuffix(slug)
   const { isEnabled: isDraftModeEnabled } = await draftMode()
 
   if (isDraftModeEnabled) {
     return (
       <Suspense fallback={<DraftModeLoader />}>
-        <DraftModeBlogPost locales={locales} slug={graphUrl} routeSlug={slug} />
+        <DraftModeBlogPost
+          locales={locales}
+          urlSuffix={urlSuffix}
+          routeSlug={slug}
+        />
       </Suspense>
     )
   }
 
   const { data } = await optimizely.getBlogPostByURL({
     locales: [locales],
-    slug: graphUrl,
+    urlSuffix,
   })
   const post = data?.BlogPost?.item
   const postFound = (data?.BlogPost?.total ?? 0) > 0
