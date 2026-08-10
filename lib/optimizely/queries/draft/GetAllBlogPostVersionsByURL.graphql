@@ -1,0 +1,21 @@
+query GetAllBlogPostVersionsByURL($locales: [Locales], $slug: String) {
+  BlogPost(
+    locale: $locales
+    where: { _metadata: { url: { default: { eq: $slug } } } }
+  ) {
+    items {
+      _metadata {
+        version
+      }
+      title
+      subheading
+      author
+      publishedDate
+      body {
+        html
+        json
+      }
+      _modified
+    }
+  }
+}

@@ -1,0 +1,17 @@
+query getAllBlogPosts($locales: [Locales], $limit: Int, $skip: Int) {
+  BlogPost(locale: $locales, limit: $limit, skip: $skip) {
+    total
+    items {
+      title
+      subheading
+      author
+      publishedDate
+      _metadata {
+        url {
+          default
+          hierarchical
+        }
+      }
+    }
+  }
+}
