@@ -2,7 +2,7 @@
 import { Locales } from '../types/generated'
 
 export const DEFAULT_LOCALE = 'en'
-export const LOCALES = ['en', 'pl', 'sv']
+export const LOCALES = ['en']
 
 export const getValidLocale = (locale: string): Locales => {
   const validLocale = getLocales().includes(locale) ? locale : DEFAULT_LOCALE

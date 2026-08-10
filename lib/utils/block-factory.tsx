@@ -7,14 +7,14 @@ type ComponentMap = Record<string, ComponentType<any>>
 export default function blocksMapperFactory<TMap extends ComponentMap>(
   contentTypeMap: TMap
 ) {
-  function factory<TypeName extends keyof TMap>({
+  function factory({
     typeName,
     props,
   }: {
-    typeName: TypeName
-    props: React.ComponentProps<TMap[TypeName]>
+    typeName: string | undefined
+    props: Record<string, unknown>
   }) {
-    const Component = contentTypeMap[typeName]
+    const Component = typeName ? contentTypeMap[typeName] : undefined
 
     if (!Component) {
       return null

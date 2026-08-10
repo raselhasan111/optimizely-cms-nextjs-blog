@@ -3,11 +3,13 @@ import { Icons } from '@/components/ui/icons'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { castContent, SafeContent } from '@/lib/optimizely/types/typeUtils'
-import {
-  SocialLink,
-  FooterColumn,
-  NavItem,
-} from '@/lib/optimizely/types/generated'
+import { SocialLink } from '@/lib/optimizely/types/generated'
+
+const NAV_ITEMS = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/feed.xml', label: 'RSS' },
+]
 
 export async function Footer({ locale }: { locale: string }) {
   const locales = getValidLocale(locale)
@@ -20,42 +22,18 @@ export async function Footer({ locale }: { locale: string }) {
     return null
   }
 
-  const { columns, socialLinks, copyrightText } = footer
+  const { socialLinks, copyrightText } = footer
 
   return (
     <footer className="border-t">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-4">
-          {columns?.map((columnItem, index) => {
-            const column = castContent<FooterColumn>(
-              columnItem as SafeContent,
-              'FooterColumn'
-            )
-            if (!column) return null
-
-            return (
-              <div key={index}>
-                <h3 className="mb-4 font-bold">{column?.title}</h3>
-                <nav className="grid gap-2">
-                  {column?.links?.map((linkItem, linkIndex) => {
-                    const link = castContent<NavItem>(linkItem, 'NavItem')
-                    if (!link) return null
-
-                    return (
-                      <Link
-                        key={linkIndex}
-                        href={link.href ?? '/'}
-                        className="text-sm"
-                      >
-                        {link.label}
-                      </Link>
-                    )
-                  })}
-                </nav>
-              </div>
-            )
-          })}
-        </div>
+        <nav className="flex justify-center gap-6">
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.href} href={item.href} className="text-sm">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <div className="mt-8 flex justify-center gap-4">
           {socialLinks?.map((linkItem, index) => {
             const link = castContent<SocialLink>(
