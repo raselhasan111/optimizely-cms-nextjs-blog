@@ -59,6 +59,15 @@ export async function generateMetadata(props: {
   }
 }
 
+// Slugs owned by dedicated route segments (app/(site)/[locale]/about,
+// .../blog). The CMS also has a CMSPage at /about, so without this
+// filter both routes prerender /en/about — and in the deployed output
+// the catch-all wins the collision (prerender-manifest srcRoute:
+// /[locale]/[slug]), serving the CMSPage through the now-empty block
+// registry: a blank page. Dev resolves per-request (static segment
+// wins), which is why this only broke in production.
+const RESERVED_SLUGS = new Set(['about', 'blog'])
+
 export async function generateStaticParams() {
   try {
     const pageTypes = ['CMSPage', 'SEOExperience']
@@ -72,7 +81,9 @@ export async function generateStaticParams() {
       const cleanPath = mapPathWithoutLocale(
         path?._metadata?.url?.default ?? ''
       )
-      uniquePaths.add(cleanPath)
+      if (!RESERVED_SLUGS.has(cleanPath)) {
+        uniquePaths.add(cleanPath)
+      }
     })
 
     return Array.from(uniquePaths).map((slug) => ({
