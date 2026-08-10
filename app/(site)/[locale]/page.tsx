@@ -1,7 +1,5 @@
 import { PostCard } from '@/components/blog/post-card'
-import { optimizely } from '@/lib/optimizely/fetch'
-import { sortByPublishedDateDesc } from '@/lib/blog/dates'
-import { extractSlugFromContentUrl } from '@/lib/blog/slug'
+import { getAllPublishedPosts } from '@/lib/blog/posts'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
 import { Metadata } from 'next'
@@ -23,17 +21,7 @@ export default async function HomePage(props: {
 }) {
   const { locale } = await props.params
   const locales = getValidLocale(locale)
-
-  const { data } = await optimizely.getAllBlogPosts(
-    { locales: [locales], limit: null, skip: null },
-    { cacheTag: 'optimizely-blog' }
-  )
-
-  const posts = sortByPublishedDateDesc(
-    (data?.BlogPost?.items ?? []).filter(
-      (item): item is NonNullable<typeof item> => item !== null
-    )
-  )
+  const posts = await getAllPublishedPosts(locales)
 
   return (
     <div className="mx-auto max-w-2xl py-10">
@@ -49,20 +37,15 @@ export default async function HomePage(props: {
         <p className="text-muted-foreground">No posts published yet.</p>
       ) : (
         <div>
-          {posts.map((post) => {
-            const slug = extractSlugFromContentUrl(post._metadata?.url?.default)
-            if (!slug) return null
-
-            return (
-              <PostCard
-                key={slug}
-                slug={slug}
-                title={post.title}
-                subheading={post.subheading}
-                publishedDate={post.publishedDate}
-              />
-            )
-          })}
+          {posts.map((post) => (
+            <PostCard
+              key={post.slug}
+              slug={post.slug}
+              title={post.title}
+              subheading={post.subheading}
+              publishedDate={post.publishedDate}
+            />
+          ))}
         </div>
       )}
     </div>

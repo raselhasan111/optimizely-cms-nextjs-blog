@@ -14,3 +14,13 @@ export const MEDIUM_LINKS: Record<string, string> = {
 export function getMediumUrl(slug: string): string | undefined {
   return MEDIUM_LINKS[slug]
 }
+
+// Posts self-canonicalize by default (this site is the canonical URL,
+// with a visible "Originally published on Medium" attribution link).
+// Add a slug here to flip that post's <link rel="canonical"> to Medium
+// instead — e.g. if Medium's copy should be treated as the original.
+export const MEDIUM_CANONICAL_SLUGS = new Set<string>([])
+
+export function isMediumCanonical(slug: string): boolean {
+  return MEDIUM_CANONICAL_SLUGS.has(slug)
+}
