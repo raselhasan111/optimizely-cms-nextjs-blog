@@ -29,7 +29,7 @@ export async function GET() {
   <channel>
     <title>Rasel Hasan</title>
     <link>${escapeXml(siteUrl)}/en</link>
-    <description>Writing on frontend engineering, security, and AI-assisted development.</description>
+    <description>Writing on frontend engineering, security, and agentic AI.</description>
     <language>en</language>${items}
   </channel>
 </rss>`
