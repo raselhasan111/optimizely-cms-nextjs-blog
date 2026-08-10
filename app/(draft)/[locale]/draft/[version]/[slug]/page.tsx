@@ -1,7 +1,10 @@
 import ContentAreaMapper from '@/components/content-area/mapper'
 import OnPageEdit from '@/components/draft/on-page-edit'
+import { PostMeta } from '@/components/blog/post-meta'
+import { PostBody } from '@/components/blog/post-body'
 import { optimizely } from '@/lib/optimizely/fetch'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
+import { buildBlogPostGraphUrl } from '@/lib/blog/slug'
 import { checkDraftMode } from '@/lib/utils/draft-mode'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
@@ -26,20 +29,57 @@ export default async function CmsPage(props: {
     { preview: true }
   )
   const page = pageResponse.data?.CMSPage?.item
+  const pageFound = (pageResponse.data?.CMSPage?.total ?? 0) > 0
 
-  const blocks = (page?.blocks ?? []).filter(
-    (block) => block !== null && block !== undefined
+  if (pageFound && page) {
+    const blocks = (page?.blocks ?? []).filter(
+      (block) => block !== null && block !== undefined
+    )
+
+    return (
+      <div className="container py-10" data-epi-edit="blocks">
+        <OnPageEdit
+          version={version}
+          currentRoute={`/${locale}/draft/${version}/${slug}`}
+        />
+        <Suspense>
+          <ContentAreaMapper blocks={blocks} preview />
+        </Suspense>
+      </div>
+    )
+  }
+
+  const postResponse = await optimizely.getPreviewBlogPostByURL(
+    { locales, slug: buildBlogPostGraphUrl(locale, slug), version },
+    { preview: true }
   )
+  const post = postResponse.data?.BlogPost?.item
+  const postFound = (postResponse.data?.BlogPost?.total ?? 0) > 0
+
+  if (!postFound || !post) {
+    return notFound()
+  }
 
   return (
-    <div className="container py-10" data-epi-edit="blocks">
+    <article className="mx-auto max-w-2xl py-10">
       <OnPageEdit
         version={version}
         currentRoute={`/${locale}/draft/${version}/${slug}`}
       />
-      <Suspense>
-        <ContentAreaMapper blocks={blocks} preview />
-      </Suspense>
-    </div>
+      <h1 className="text-3xl font-bold">{post.title}</h1>
+      {post.subheading && (
+        <p className="mt-2 text-lg text-muted-foreground">
+          {post.subheading}
+        </p>
+      )}
+      <div className="mt-4">
+        <PostMeta
+          author={post.author}
+          publishedDate={post.publishedDate}
+          slug={slug}
+        />
+      </div>
+      <PostBody json={post.body?.json} />
+    </article>
   )
 }

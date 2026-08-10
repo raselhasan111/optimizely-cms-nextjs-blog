@@ -6709,7 +6709,7 @@ export type GetBlogPostByUrlQueryVariables = Exact<{
 }>;
 
 
-export type GetBlogPostByUrlQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', item: { __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, _modified: any | null, body: { __typename?: 'RichText', html: string | null, json: any | null } | null, _metadata: { __typename?: 'ContentMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'InstanceMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'ItemMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'MediaMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | null } | null } | null };
+export type GetBlogPostByUrlQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', total: number | null, item: { __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, _modified: any | null, body: { __typename?: 'RichText', html: string | null, json: any | null } | null, _metadata: { __typename?: 'ContentMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'InstanceMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'ItemMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | { __typename?: 'MediaMetadata', url: { __typename?: 'ContentUrl', default: string | null } | null } | null } | null } | null };
 
 export type GetContentByGuidQueryVariables = Exact<{
   guid: InputMaybe<Scalars['String']['input']>;
@@ -6810,7 +6810,7 @@ export type GetPreviewBlogPostByUrlQueryVariables = Exact<{
 }>;
 
 
-export type GetPreviewBlogPostByUrlQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', item: { __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, _modified: any | null, body: { __typename?: 'RichText', html: string | null, json: any | null } | null } | null } | null };
+export type GetPreviewBlogPostByUrlQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', total: number | null, item: { __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, _modified: any | null, body: { __typename?: 'RichText', html: string | null, json: any | null } | null } | null } | null };
 
 export type GetPreviewPageByUrlQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
@@ -6819,7 +6819,7 @@ export type GetPreviewPageByUrlQueryVariables = Exact<{
 }>;
 
 
-export type GetPreviewPageByUrlQuery = { __typename?: 'Query', CMSPage: { __typename?: 'CMSPageOutput', item: { __typename?: 'CMSPage', blocks: Array<{ __typename: 'AvailabilityBlock' } | { __typename: 'BlankExperience' } | { __typename: 'BlankSection' } | { __typename: 'BlogPost' } | { __typename: 'CMSPage' } | { __typename: 'ContactBlock' } | { __typename: 'Footer' } | { __typename: 'FooterColumn' } | { __typename: 'GenericMedia' } | { __typename: 'GenericMedia123' } | { __typename: 'Header' } | { __typename: 'HeroBlock' } | { __typename: 'ImageMedia' } | { __typename: 'LogoItemBlock' } | { __typename: 'LogosBlock' } | { __typename: 'NavItem' } | { __typename: 'PortfolioGridBlock' } | { __typename: 'PortfolioItemBlock' } | { __typename: 'ProfileBlock' } | { __typename: 'SEOExperience' } | { __typename: 'ServiceItem' } | { __typename: 'ServicesBlock' } | { __typename: 'SocialLink' } | { __typename: 'StartPage' } | { __typename: 'StoryBlock' } | { __typename: 'SysContentFolder' } | { __typename: 'TestimonialItem' } | { __typename: 'TestimonialItemBlock' } | { __typename: 'TestimonialsBlock' } | { __typename: 'VideoMedia' } | { __typename: '_Component' } | { __typename: '_Content' } | { __typename: '_Experience' } | { __typename: '_Folder' } | { __typename: '_Image' } | { __typename: '_Media' } | { __typename: '_Page' } | { __typename: '_Section' } | { __typename: '_Video' } | null> | null } | null } | null };
+export type GetPreviewPageByUrlQuery = { __typename?: 'Query', CMSPage: { __typename?: 'CMSPageOutput', total: number | null, item: { __typename?: 'CMSPage', blocks: Array<{ __typename: 'AvailabilityBlock' } | { __typename: 'BlankExperience' } | { __typename: 'BlankSection' } | { __typename: 'BlogPost' } | { __typename: 'CMSPage' } | { __typename: 'ContactBlock' } | { __typename: 'Footer' } | { __typename: 'FooterColumn' } | { __typename: 'GenericMedia' } | { __typename: 'GenericMedia123' } | { __typename: 'Header' } | { __typename: 'HeroBlock' } | { __typename: 'ImageMedia' } | { __typename: 'LogoItemBlock' } | { __typename: 'LogosBlock' } | { __typename: 'NavItem' } | { __typename: 'PortfolioGridBlock' } | { __typename: 'PortfolioItemBlock' } | { __typename: 'ProfileBlock' } | { __typename: 'SEOExperience' } | { __typename: 'ServiceItem' } | { __typename: 'ServicesBlock' } | { __typename: 'SocialLink' } | { __typename: 'StartPage' } | { __typename: 'StoryBlock' } | { __typename: 'SysContentFolder' } | { __typename: 'TestimonialItem' } | { __typename: 'TestimonialItemBlock' } | { __typename: 'TestimonialsBlock' } | { __typename: 'VideoMedia' } | { __typename: '_Component' } | { __typename: '_Content' } | { __typename: '_Experience' } | { __typename: '_Folder' } | { __typename: '_Image' } | { __typename: '_Media' } | { __typename: '_Page' } | { __typename: '_Section' } | { __typename: '_Video' } | null> | null } | null } | null };
 
 export type GetPreviewStartPageQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
@@ -6965,6 +6965,7 @@ export const GetAllBlogPostsDocument = gql`
 export const GetBlogPostByUrlDocument = gql`
     query getBlogPostByURL($locales: [Locales], $slug: String) {
   BlogPost(locale: $locales, where: {_metadata: {url: {default: {eq: $slug}}}}) {
+    total
     item {
       title
       subheading
@@ -7285,6 +7286,7 @@ export const GetPreviewBlogPostByUrlDocument = gql`
     locale: $locales
     where: {_metadata: {version: {eq: $version}}, _and: {_metadata: {url: {default: {eq: $slug}}}}}
   ) {
+    total
     item {
       title
       subheading
@@ -7305,6 +7307,7 @@ export const GetPreviewPageByUrlDocument = gql`
     locale: $locales
     where: {_metadata: {version: {eq: $version}}, _and: {_metadata: {url: {default: {eq: $slug}}}}}
   ) {
+    total
     item {
       blocks {
         ...ItemsInContentArea

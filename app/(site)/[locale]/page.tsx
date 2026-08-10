@@ -1,28 +1,19 @@
-import ContentAreaMapper from '@/components/content-area/mapper'
-import DraftModeHomePage from '@/components/draft/draft-mode-homepage'
-import { DraftModeLoader } from '@/components/draft/draft-mode-loader'
+import { PostCard } from '@/components/blog/post-card'
 import { optimizely } from '@/lib/optimizely/fetch'
+import { sortByPublishedDateDesc } from '@/lib/blog/dates'
+import { extractSlugFromContentUrl } from '@/lib/blog/slug'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
 import { Metadata } from 'next'
-import { draftMode } from 'next/headers'
-import { Suspense } from 'react'
 
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await props.params
-  const locales = getValidLocale(locale)
-  const pageResp = await optimizely.GetStartPage({ locales })
-  const page = pageResp.data?.StartPage?.item
-  if (!page) {
-    return {}
-  }
 
   return {
-    title: page.title,
-    description: page.shortDescription || '',
-    keywords: page.keywords ?? '',
+    title: 'Rasel Hasan',
+    description: 'Writing on frontend engineering, security, and AI-assisted development.',
     alternates: generateAlternates(locale, '/'),
   }
 }
@@ -32,27 +23,48 @@ export default async function HomePage(props: {
 }) {
   const { locale } = await props.params
   const locales = getValidLocale(locale)
-  const { isEnabled: isDraftModeEnabled } = await draftMode()
-  if (isDraftModeEnabled) {
-    return (
-      <Suspense fallback={<DraftModeLoader />}>
-        <DraftModeHomePage locales={locales} />
-      </Suspense>
+
+  const { data } = await optimizely.getAllBlogPosts(
+    { locales: [locales], limit: null, skip: null },
+    { cacheTag: 'optimizely-blog' }
+  )
+
+  const posts = sortByPublishedDateDesc(
+    (data?.BlogPost?.items ?? []).filter(
+      (item): item is NonNullable<typeof item> => item !== null
     )
-  }
-
-  const pageResponse = await optimizely.GetStartPage({ locales })
-
-  const startPage = pageResponse.data?.StartPage?.item
-  const blocks = (startPage?.blocks ?? []).filter(
-    (block) => block !== null && block !== undefined
   )
 
   return (
-    <>
-      <Suspense>
-        <ContentAreaMapper blocks={blocks} />
-      </Suspense>
-    </>
+    <div className="mx-auto max-w-2xl py-10">
+      <header className="mb-12">
+        <h1 className="text-3xl font-bold">Rasel Hasan</h1>
+        <p className="mt-2 text-muted-foreground">
+          Writing on frontend engineering, security, and AI-assisted
+          development.
+        </p>
+      </header>
+
+      {posts.length === 0 ? (
+        <p className="text-muted-foreground">No posts published yet.</p>
+      ) : (
+        <div>
+          {posts.map((post) => {
+            const slug = extractSlugFromContentUrl(post._metadata?.url?.default)
+            if (!slug) return null
+
+            return (
+              <PostCard
+                key={slug}
+                slug={slug}
+                title={post.title}
+                subheading={post.subheading}
+                publishedDate={post.publishedDate}
+              />
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

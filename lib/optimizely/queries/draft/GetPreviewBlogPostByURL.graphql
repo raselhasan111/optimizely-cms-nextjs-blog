@@ -10,6 +10,7 @@ query getPreviewBlogPostByURL(
       _and: { _metadata: { url: { default: { eq: $slug } } } }
     }
   ) {
+    total
     item {
       title
       subheading

@@ -3,6 +3,7 @@ query getBlogPostByURL($locales: [Locales], $slug: String) {
     locale: $locales
     where: { _metadata: { url: { default: { eq: $slug } } } }
   ) {
+    total
     item {
       title
       subheading
