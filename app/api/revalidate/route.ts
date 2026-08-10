@@ -45,11 +45,21 @@ export async function POST(request: NextRequest) {
 
     const content = await fetchContentByGuid(formattedGuid)
 
-    if (
-      content?.__typename &&
-      ABOUT_PAGE_BLOCK_TYPES.has(content.__typename)
-    ) {
+    // The concrete content type must come from _metadata.types, NOT
+    // __typename: the abstract _Content lookup reports the interface
+    // (_Component for blocks, _Page for pages — verified against the
+    // live API), so __typename-based branches silently never match.
+    const contentTypes = (content?._metadata?.types ?? []).filter(
+      (t): t is string => Boolean(t)
+    )
+
+    if (contentTypes.some((t) => ABOUT_PAGE_BLOCK_TYPES.has(t))) {
       await handleAboutPageRevalidation(locale)
+      return NextResponse.json({ revalidated: true, now: Date.now() })
+    }
+
+    if (contentTypes.includes('BlogPost')) {
+      await handleBlogPostRevalidation(content?._metadata?.url?.default, locale)
       return NextResponse.json({ revalidated: true, now: Date.now() })
     }
 
@@ -67,11 +77,6 @@ export async function POST(request: NextRequest) {
 
     if (!url) {
       return NextResponse.json({ message: 'Page Not Found' }, { status: 400 })
-    }
-
-    if (content?.__typename === 'BlogPost') {
-      await handleBlogPostRevalidation(content._metadata?.url?.default, locale)
-      return NextResponse.json({ revalidated: true, now: Date.now() })
     }
 
     const urlWithLocale = normalizeUrl(url, locale)
