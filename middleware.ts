@@ -14,6 +14,79 @@ function shouldExclude(path: string) {
   )
 }
 
+// The CMS communicationinjector script + Visual Builder iframe editing
+// only run against the (draft) route group ("/{locale}/draft/..."); see
+// app/(draft)/[locale]/layout.tsx. Everywhere else gets a locked-down CSP.
+function isDraftRoute(pathname: string): boolean {
+  return /^\/[a-z]{2}\/draft(\/|$)/.test(pathname)
+}
+
+function getCmsOrigin(): string | undefined {
+  const cmsUrl = process.env.NEXT_PUBLIC_CMS_URL
+  if (!cmsUrl) return undefined
+  try {
+    return new URL(cmsUrl).origin
+  } catch {
+    return undefined
+  }
+}
+
+// Report-Only for now: Next.js's App Router emits a fixed set of inline
+// <script> tags for RSC hydration that a bare `script-src 'self'` blocks
+// outright (confirmed by testing both dev and production builds — the
+// page rendered blank). Getting a nonce to reach those Next-internal
+// scripts needs `'strict-dynamic'` plus Next reading the nonce back off
+// the request's CSP header, and that round-trip did not pick it up in
+// this Next 15.5.9 setup even with 'strict-dynamic' added. Enforcing
+// script-src here would break the whole site, so this ships as
+// Report-Only (violations are visible in the browser console/reporting
+// endpoint, nothing is blocked) until a nonce strategy is verified to
+// work end-to-end — see the plan's own "start Report-Only if anything
+// breaks" guidance. The other headers below have no such risk and are
+// fully enforced.
+function buildCsp(pathname: string): string {
+  const cmsOrigin = getCmsOrigin()
+  const imgSrc = [
+    "'self'",
+    'https://miro.medium.com',
+    'https://res.cloudinary.com',
+    'data:',
+  ]
+  if (cmsOrigin) imgSrc.push(cmsOrigin)
+
+  if (isDraftRoute(pathname)) {
+    const frameAncestors = ["'self'", ...(cmsOrigin ? [cmsOrigin] : [])]
+    return [
+      `default-src 'self'`,
+      `script-src 'self' 'unsafe-inline' ${cmsOrigin ?? ''}`.trim(),
+      `style-src 'self' 'unsafe-inline'`,
+      `img-src ${imgSrc.join(' ')}`,
+      `frame-ancestors ${frameAncestors.join(' ')}`,
+    ].join('; ')
+  }
+
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'unsafe-inline'`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src ${imgSrc.join(' ')}`,
+    `frame-ancestors 'none'`,
+  ].join('; ')
+}
+
+function applySecurityHeaders(response: NextResponse, pathname: string): void {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains'
+  )
+  response.headers.set('Content-Security-Policy-Report-Only', buildCsp(pathname))
+  if (!isDraftRoute(pathname)) {
+    response.headers.set('X-Frame-Options', 'DENY')
+  }
+}
+
 function getBrowserLanguage(
   request: NextRequest,
   locales: string[]
@@ -90,6 +163,7 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next()
 
   if (shouldExclude(pathname)) {
+    applySecurityHeaders(response, pathname)
     return response
   }
 
@@ -105,6 +179,7 @@ export async function middleware(request: NextRequest) {
 
     response = NextResponse.rewrite(new URL(newUrl, request.url))
     updateLocaleCookies(request, response, localeInPathname)
+    applySecurityHeaders(response, pathname)
     return response
   }
 
@@ -120,6 +195,7 @@ export async function middleware(request: NextRequest) {
       : NextResponse.redirect(new URL(newUrl, request.url))
 
   updateLocaleCookies(request, response, locale)
+  applySecurityHeaders(response, pathname)
 
   return response
 }

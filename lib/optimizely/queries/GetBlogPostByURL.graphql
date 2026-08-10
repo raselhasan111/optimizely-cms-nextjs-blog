@@ -1,0 +1,24 @@
+query getBlogPostByURL($locales: [Locales], $slug: String) {
+  BlogPost(
+    locale: $locales
+    where: { _metadata: { url: { default: { eq: $slug } } } }
+  ) {
+    total
+    item {
+      title
+      subheading
+      author
+      publishedDate
+      body {
+        html
+        json
+      }
+      _modified
+      _metadata {
+        url {
+          default
+        }
+      }
+    }
+  }
+}

@@ -1,9 +1,9 @@
-query getPreviewPageByURL(
+query getPreviewBlogPostByURL(
   $locales: [Locales]
   $slug: String
   $version: String
 ) {
-  CMSPage(
+  BlogPost(
     locale: $locales
     where: {
       _metadata: { version: { eq: $version } }
@@ -12,9 +12,15 @@ query getPreviewPageByURL(
   ) {
     total
     item {
-      blocks {
-        ...ItemsInContentArea
+      title
+      subheading
+      author
+      publishedDate
+      body {
+        html
+        json
       }
+      _modified
     }
   }
 }
