@@ -1,3 +1,29 @@
+fragment ProfileBlockFragment on ProfileBlock {
+  imageSrc
+  bio
+  name
+  title
+}
+
+fragment StoryBlockFragment on StoryBlock {
+  story
+  highlights
+}
+
+fragment AvailabilityBlockFragment on AvailabilityBlock {
+  availability
+  projectTypes
+}
+
+fragment ContactBlockFragment on ContactBlock {
+  title
+  description
+}
+
 fragment ItemsInContentArea on _IContent {
   __typename
+  ...ProfileBlockFragment
+  ...StoryBlockFragment
+  ...AvailabilityBlockFragment
+  ...ContactBlockFragment
 }
