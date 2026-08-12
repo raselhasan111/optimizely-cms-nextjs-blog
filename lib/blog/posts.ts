@@ -9,6 +9,7 @@ export interface BlogPostSummary {
   subheading: string | null
   author: string | null
   publishedDate: string | null
+  isPinned: boolean
 }
 
 export async function getAllPublishedPosts(
@@ -45,9 +46,29 @@ export async function getAllPublishedPosts(
         subheading: item.subheading,
         author: item.author,
         publishedDate: item.publishedDate,
+        isPinned: item.isPinned ?? false,
       }
     })
     .filter((post): post is BlogPostSummary => post !== null)
 
   return sortByPublishedDateDesc(posts)
+}
+
+// If more than one post is pinned, the newest wins (by publishedDate,
+// same ordering as the rest of the list) rather than erroring — the
+// CMS doesn't enforce "only one" for a boolean field. The winner is
+// excluded from `rest` so it never appears twice on the homepage.
+export function splitPinned(posts: BlogPostSummary[]): {
+  pinned: BlogPostSummary | null
+  rest: BlogPostSummary[]
+} {
+  const pinned = posts.find((post) => post.isPinned) ?? null
+  if (!pinned) {
+    return { pinned: null, rest: posts }
+  }
+
+  return {
+    pinned,
+    rest: posts.filter((post) => post.slug !== pinned.slug),
+  }
 }

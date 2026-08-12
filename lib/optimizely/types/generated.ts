@@ -274,6 +274,7 @@ export type BlogPost = IData & _IContent & _IItem & _IPage & {
   _track: Maybe<Scalars['String']['output']>;
   author: Maybe<Scalars['String']['output']>;
   body: Maybe<RichText>;
+  isPinned: Maybe<Scalars['Boolean']['output']>;
   publishedDate: Maybe<Scalars['String']['output']>;
   subheading: Maybe<Scalars['String']['output']>;
   title: Maybe<Scalars['String']['output']>;
@@ -301,6 +302,15 @@ export type BlogPostFacet = {
   _itemMetadata: Maybe<_MetadataFacet>;
   _metadata: Maybe<IContentMetadataFacet>;
   body: Maybe<RichTextFacet>;
+  isPinned: Maybe<Array<Maybe<StringFacet>>>;
+};
+
+
+export type BlogPostFacetIsPinnedArgs = {
+  filters: InputMaybe<Array<Scalars['String']['input']>>;
+  limit?: Scalars['Int']['input'];
+  orderBy?: InputMaybe<OrderBy>;
+  orderType?: InputMaybe<OrderByFacetType>;
 };
 
 export type BlogPostOrderByInput = {
@@ -312,6 +322,7 @@ export type BlogPostOrderByInput = {
   /** The value needs to be a positive value, but cannot exceed the maximum value of an integer. In case it is exceeded, the maximum of an integer is used. In case of a negative value, semantic search will be disabled. */
   _semanticWeight: InputMaybe<Scalars['Float']['input']>;
   body: InputMaybe<RichTextOrderByInput>;
+  isPinned: InputMaybe<OrderBy>;
 };
 
 export type BlogPostOutput = {
@@ -339,6 +350,18 @@ export type BlogPostWhereInput = {
   _or: InputMaybe<Array<InputMaybe<BlogPostWhereInput>>>;
   _source: InputMaybe<SourceFilterInput>;
   body: InputMaybe<RichTextWhereInput>;
+  isPinned: InputMaybe<BoolFilterInput>;
+};
+
+export type BoolFilterInput = {
+  /** `boost` influences the weight of a field by boosting a match with a number (default: 1) — counts more towards the eventual relevance score which can be projected with `_score` — at query time. Note that `boost` cannot be a negative number. */
+  boost: InputMaybe<Scalars['Int']['input']>;
+  /** `eq` matches on an exact value, but the value is case-insensitive. */
+  eq: InputMaybe<Scalars['Boolean']['input']>;
+  /** `exist` matches results that have this field. */
+  exist: InputMaybe<Scalars['Boolean']['input']>;
+  /** `not_eq` retrieves results not matching with an exact (but case-insensitive) value. */
+  notEq: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CmsPage = IData & _IContent & _IItem & _IPage & {
@@ -6833,7 +6856,7 @@ export type GetAllBlogPostsQueryVariables = Exact<{
 }>;
 
 
-export type GetAllBlogPostsQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', total: number | null, items: Array<{ __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, _metadata: { __typename?: 'ContentMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'InstanceMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'ItemMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'MediaMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | null } | null> | null } | null };
+export type GetAllBlogPostsQuery = { __typename?: 'Query', BlogPost: { __typename?: 'BlogPostOutput', total: number | null, items: Array<{ __typename?: 'BlogPost', title: string | null, subheading: string | null, author: string | null, publishedDate: string | null, isPinned: boolean | null, _metadata: { __typename?: 'ContentMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'InstanceMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'ItemMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | { __typename?: 'MediaMetadata', url: { __typename?: 'ContentUrl', default: string | null, hierarchical: string | null } | null } | null } | null> | null } | null };
 
 export type GetBlogPostByUrlQueryVariables = Exact<{
   locales: InputMaybe<Array<InputMaybe<Locales>> | InputMaybe<Locales>>;
@@ -7109,6 +7132,7 @@ export const GetAllBlogPostsDocument = gql`
       subheading
       author
       publishedDate
+      isPinned
       _metadata {
         url {
           default

@@ -1,5 +1,6 @@
 import { PostCard } from '@/components/blog/post-card'
-import { getAllPublishedPosts } from '@/lib/blog/posts'
+import { PinnedPostCard } from '@/components/blog/pinned-post-card'
+import { getAllPublishedPosts, splitPinned } from '@/lib/blog/posts'
 import { getValidLocale } from '@/lib/optimizely/utils/language'
 import { generateAlternates } from '@/lib/utils/metadata'
 import { Metadata } from 'next'
@@ -22,6 +23,7 @@ export default async function HomePage(props: {
   const { locale } = await props.params
   const locales = getValidLocale(locale)
   const posts = await getAllPublishedPosts(locales)
+  const { pinned, rest } = splitPinned(posts)
 
   return (
     <div className="mx-auto max-w-2xl py-10">
@@ -32,11 +34,20 @@ export default async function HomePage(props: {
         </p>
       </header>
 
+      {pinned && (
+        <PinnedPostCard
+          slug={pinned.slug}
+          title={pinned.title}
+          subheading={pinned.subheading}
+          publishedDate={pinned.publishedDate}
+        />
+      )}
+
       {posts.length === 0 ? (
         <p className="text-muted-foreground">No posts published yet.</p>
       ) : (
         <div>
-          {posts.map((post) => (
+          {rest.map((post) => (
             <PostCard
               key={post.slug}
               slug={post.slug}
