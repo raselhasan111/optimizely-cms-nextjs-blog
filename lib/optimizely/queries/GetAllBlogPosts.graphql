@@ -6,6 +6,7 @@ query getAllBlogPosts($locales: [Locales], $limit: Int) {
       subheading
       author
       publishedDate
+      isPinned
       _metadata {
         url {
           default
