@@ -20,10 +20,16 @@ fragment ContactBlockFragment on ContactBlock {
   description
 }
 
+fragment LatestPostsElementFragment on LatestPostsElement {
+  heading
+  count
+}
+
 fragment ItemsInContentArea on _IContent {
   __typename
   ...ProfileBlockFragment
   ...StoryBlockFragment
   ...AvailabilityBlockFragment
   ...ContactBlockFragment
+  ...LatestPostsElementFragment
 }
