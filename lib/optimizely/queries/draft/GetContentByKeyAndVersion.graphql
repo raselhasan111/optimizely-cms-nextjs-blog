@@ -1,5 +1,12 @@
+# `variation` is required to preview A/B-test variations: Graph excludes
+# variation content by default, so without it a variation's version resolves to
+# an empty shell whose __typename is the abstract `_Content` -- which breaks the
+# type-based routing in app/api/draft/route.ts and 404s the preview.
 query GetContentByKeyAndVersion($key: String, $ver: String) {
-  _Content(where: { _metadata: { key: { eq: $key }, version: { eq: $ver } } }) {
+  _Content(
+    where: { _metadata: { key: { eq: $key }, version: { eq: $ver } } }
+    variation: { include: ALL, includeOriginal: true }
+  ) {
     item {
       __typename
       _metadata {

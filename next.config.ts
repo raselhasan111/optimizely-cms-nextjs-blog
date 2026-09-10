@@ -33,8 +33,13 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/preview/:path*',
-        destination: '/api/draft:path*',
-        permanent: true,
+        // Destination catch-all needs the "/" delimiter — "/api/draft:path*"
+        // throws "Can not repeat 'path' without a prefix and suffix" in Next's
+        // path-to-regexp, 500ing every CMS preview request before it reaches
+        // the handler. The CMS calls /preview?key=…&ver=… (query only), so
+        // :path* is empty and this resolves to /api/draft with the query kept.
+        destination: '/api/draft/:path*',
+        permanent: false,
       },
     ]
   },
