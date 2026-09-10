@@ -1,10 +1,14 @@
 query VisualBuilder($locales: [Locales], $key: String, $version: String) {
   SEOExperience(
     locale: $locales
-    where: {
-      _metadata: { key: { eq: $key } }
-      _or: { _metadata: { version: { eq: $version } } }
-    }
+    # `variation` is required to render A/B-test variations in preview: Graph
+    # excludes variation content unless asked for it, so a variation's version
+    # otherwise returns an empty composition (blank preview).
+    variation: { include: ALL, includeOriginal: true }
+    # Match key AND version (both in one _metadata object). The previous
+    # `key` _or `version` matched key-only or version-only, which -- combined
+    # with `item` -- could return the wrong variation/version.
+    where: { _metadata: { key: { eq: $key }, version: { eq: $version } } }
   ) {
     item {
       composition {

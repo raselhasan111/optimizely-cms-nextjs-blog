@@ -7930,7 +7930,10 @@ export const GetComponentByKeyDocument = gql`
     ${ItemsInContentAreaFragmentDoc}`;
 export const GetContentByKeyAndVersionDocument = gql`
     query GetContentByKeyAndVersion($key: String, $ver: String) {
-  _Content(where: {_metadata: {key: {eq: $key}, version: {eq: $ver}}}) {
+  _Content(
+    where: {_metadata: {key: {eq: $key}, version: {eq: $ver}}}
+    variation: {include: ALL, includeOriginal: true}
+  ) {
     item {
       __typename
       _metadata {
@@ -8000,7 +8003,8 @@ export const VisualBuilderDocument = gql`
     query VisualBuilder($locales: [Locales], $key: String, $version: String) {
   SEOExperience(
     locale: $locales
-    where: {_metadata: {key: {eq: $key}}, _or: {_metadata: {version: {eq: $version}}}}
+    variation: {include: ALL, includeOriginal: true}
+    where: {_metadata: {key: {eq: $key}, version: {eq: $version}}}
   ) {
     item {
       composition {
